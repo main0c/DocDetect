@@ -1,14 +1,17 @@
 import RPi.GPIO as GPIO
 from repeat import RepeatTimer
 from comm.intmessage import IntMessage
-from utils.debug import DBG
+# from utils.debug import DBG
+
 
 class GPIODetect():
 
     _commCallback = None
     repeatThread = RepeatTimer(1000, None)
+
     def __init__(self, commCallback):
         self._commCallback = commCallback
+
     def setup(self):
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BOARD)
@@ -16,8 +19,6 @@ class GPIODetect():
         GPIO.setup(16, GPIO.IN)
         GPIO.setup(21, GPIO.OUT)
         pass
-
-
 
     def detctThreadWork(self):
         # DBG("detctThreadWork!")
@@ -38,6 +39,7 @@ class GPIODetect():
         # DBG("detct!")
         self.repeatThread = RepeatTimer(2, self.detctThreadWork)
         self.repeatThread.start()
+
     def cleanup(self):
         self.repeatThread.cancel()
         GPIO.cleanup()

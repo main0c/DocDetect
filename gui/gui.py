@@ -15,9 +15,7 @@
 #  --------------------------------------------------------------
 import sys
 import json
-
 import threading
-import time
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtGui import *
@@ -68,31 +66,36 @@ class Gui():
 
     def check_stack(self, msg):
         dict = json.loads(msg)
-        # self._gui.comm(IntMessage(dict['type'],  eval(dict['pyload'])))
-        self.set_room_statu(dict['type'], eval(dict['pyload']))
+        self.set_room_statu({'type': int(IntMessage.ready), 'pyload':  eval(dict['pyload'])})
+        # self.set_room_statu(dict['type'], eval(dict['pyload']))
 
-    def set_room_statu(self, statu, payload):
+    def set_room_statu(self, dic):
         DBG("set_room_statu:")
-        self.data.room_array.append(statu)
-        preStatu = statu
-        if preStatu == IntMessage.ready:
+        msg = IntMessage(dic['type'],  dic['pyload'])
+
+        self.data.room_array.append(msg.get_type())
+
+        if msg.get_type() is IntMessage.ready:
             self._ui.statuLeftBtn.setText("IS READY")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color:rgb(33, 255, 6);color: white; border: none;font-size:24px;}")
             self._ui.statuRightBtn.setText("Please Come In")
-        elif preStatu == IntMessage.use:
+        elif msg.get_type() is IntMessage.use:
             self._ui.statuLeftBtn.setText("IN USE")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color: yellow;color: white; border: none;font-size:24px;}")
             self._ui.statuRightBtn.setText("Now Serve")
-        elif preStatu == IntMessage.serve:
-            DBG(str(payload))
-            self._ui.statuLeftBtn.setText("IN SERVICE")
+        elif msg.get_type() is IntMessage.serve:
+            # DBG(str(payload))
+            payload = msg.get_payload()
+            pl = eval(payload)
+            info = ('UUID:' + str(pl['UUID']) + 'MAJ:' + str(pl['MAJOR']) + 'MIN:' + str(pl['MINOR']))
+            self._ui.statuLeftBtn.setText("IN SERVICE" + info)
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color: blue;color: white; border: none;font-size:24px;}")
 
             self._ui.statuRightBtn.setText("Now Serve")
-        elif preStatu == IntMessage.clean:
+        elif msg.get_type() is IntMessage.clean:
             self._ui.statuLeftBtn.setText("NEED CLEAN")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color: gray;color: white; border: none;font-size:24px;}")
@@ -228,7 +231,7 @@ class Gui():
         self._ui.led1Lbl.setAutoFillBackground(True)
         self._ui.led2Lbl.setAutoFillBackground(True)
 
-        self.set_room_statu(IntMessage.ready, '')
+        self.set_room_statu({'type': int(IntMessage.ready), 'pyload': ''})
         self._mainwindow.show()
         self._ui.menuSave.triggered[QAction].connect(self.save_to_config)
         self._app.aboutToQuit.connect(self.uiclosed)
@@ -264,33 +267,30 @@ class Gui():
         self._commcallback(msg)
 
     def bcscanstart_clicked(self):
-
         msg = IntMessage(IntMessage.START_SCAN_BLE)
         self._commcallback(msg)
         DBG("Scan Button clicked")
 
     def bcscanstop_clicked(self):
-
         msg = IntMessage(IntMessage.STOP_SCAN_BLE)
         self._commcallback(msg)
         DBG("Stop Button clicked")
 
     def btscanstart_clicked(self):
-
         msg = IntMessage(IntMessage.START_SCAN_BT)
         self._commcallback(msg)
 
     def statuleftbutton_clicked(self):
-        preStatu = self.get_room_pre_statu()
-        DBG('---room Statu:' + str(preStatu))
-        if preStatu == IntMessage.clean:
-            self.set_room_statu(IntMessage.ready, '')
+        pre_statu = self.get_room_pre_statu()
+        DBG('---room Statu:' + str(pre_statu))
+        if pre_statu == IntMessage.clean:
+            self.set_room_statu({'type': int(IntMessage.ready), 'pyload': ''})
 
     def staturightbutton_clicked(self):
-        preStatu = self.get_room_pre_statu()
-        DBG('---room Statu:' + str(preStatu))
-        if preStatu == IntMessage.clean:
-            self.set_room_statu(IntMessage.ready, '')
+        pre_statu = self.get_room_pre_statu()
+        DBG('---room Statu:' + str(pre_statu))
+        if pre_statu == IntMessage.clean:
+            self.set_room_statu({'type': int(IntMessage.ready), 'pyload': ''})
 
     # ui closed
     def uiclosed(self):

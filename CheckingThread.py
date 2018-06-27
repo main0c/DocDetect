@@ -24,37 +24,11 @@ class CheckingThread(QThread):
         self.data = data
         self.lock = lock
 
-    # ts之内有beacon并获得最近一个beacon 返回{'udid':str(pl)}
-    def check_nearest_beacon(self, bdic, ts):
-        bas = []
-        for key in bdic:
-            arr = bdic[key]
-            avg = 0
-            ct = 0
-            for index, pl in enumerate(arr):
-                if time.time() - pl["time"] < ts:
-                    avg = avg + self.calculateDistance(pl['TX'], pl['RSSI'])
-                    ct = ct + 1
-            if ct > 0:
-                avg = avg / ct
-            # 把距离小于10m的提取出来
-            if avg < 10:
-                bas.append([key, str(avg)])
-        if len(bas) > 0:
-            findat = bas[0]
-            for index, at in enumerate(bas):
-                if index > 0:
-                    if int(findat[1]) < int(at[1]):
-                        findat = at
-            return {'type': int(IntMessage.serve), 'pyload': str(findat[0])}
-        else:
-            return {'type': int(IntMessage.use), 'pyload': ''}
-
     def check_use_or_serve(self):
         # READY状态下判断S2亮 use or Serve:
         # 前10s判断s1有010状态变更
         DBG('check_use_or_serve')
-        if self.data.check010(self.data.s1_array, 10) == True:
+        if self.data.check010(self.data.s1_array, 10) is True:
             DBG('check_use_or_serve 1')
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
@@ -68,14 +42,14 @@ class CheckingThread(QThread):
             else:
                 DBG('check_use_or_serve 4')
                 # 设置serve状态，并且获取最近的beacon
-                input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
+                input = json.dumps(self.data.check_nearest_beacon(5))
                 self._signal.emit(input)
 
     def use_check_serve_or_clean(self):
         # USE状态下判断serve or clean:
         # S1亮灯后判断3s后S2有010状态变更Y—再判断附近有没有beacon Y:SERVE N:USE
         time.sleep(3)
-        input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
+        input = json.dumps(self.data.check_nearest_beacon(5))
         self._signal.emit(input)
         # S2亮灯后判断3s后S2有没有010，有再判断2s后S1有没有010，Y:再判断附近有没有beacon SERVE N再判断S2有没有010Y:USE N:CLEAN
         time.sleep(10)
@@ -85,7 +59,7 @@ class CheckingThread(QThread):
         # SERVE状态下判断serve or clean:
         # S2亮前10s判断s1有010状态变更
         time.sleep(3)
-        input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
+        input = json.dumps(self.data.check_nearest_beacon(5))
         self._signal.emit(input)
         # USE：S1-1情况下判断未来3s有没有S2-010再判断S1后来有没有010如果有设置clean
         #       然后搜索附近beacon，如果有beacon找最近beacon设置serve
@@ -95,7 +69,7 @@ class CheckingThread(QThread):
         time.sleep(10)
         # READY状态下判断S2亮 use or Serve:
         # 前10s判断s1有010状态变更
-        if self.data.check010(self.datas1_array, 10) == True:
+        if self.data.check010(self.datas1_array, 10) is True:
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
             if len(self.data.beacons_array) == 0:
@@ -105,7 +79,8 @@ class CheckingThread(QThread):
                 self._signal.emit(input)
             else:
                 # 设置serve状态，并且获取最近的beacon
-                input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
+                dic = {'type': int(IntMessage.serve), 'pyload': str(self.data.check_nearest_beacon(5))}
+                input = json.dumps(dic)
                 self._signal.emit(input)
 
     def run(self):
@@ -116,7 +91,7 @@ class CheckingThread(QThread):
                 # DBG("CheckingThread")
                 self.lock.acquire()
 
-                if self.data.get_checking() == True:
+                if self.data.get_checking() is True:
                     if self.data.ck_statu == ThreadCheckStatus.checking_use_or_serve:
                         self.check_use_or_serve()
                     elif self.data.ck_statu == ThreadCheckStatus.checking_serve_or_clean:

@@ -5,7 +5,6 @@ import time  # 引入time模块
 import math
 
 
-
 class ThreadCheckStatus(enum.Enum):
     checking_no = 3
     checking_use_or_serve = 0
@@ -14,6 +13,7 @@ class ThreadCheckStatus(enum.Enum):
 
 
 class DetectManager():
+
     # beacon距离数组
     bstatus_dic = {}
     # s1灯时序数组
@@ -24,7 +24,6 @@ class DetectManager():
     # 当前房间时序数组
     room_array = []
     beacons_array = []
-
     ck_statu = ThreadCheckStatus.checking_no
 
     def __init__(self):
@@ -41,12 +40,12 @@ class DetectManager():
         return self.checking
 
     def get(self):
-        if self.pool.__len__()>0:
+        if self.pool.__len__() > 0:
             return self.pool.pop()
         else:
             return None
 
-    def add(self,data):
+    def add(self, data):
         self.pool.append(data)
 
     def print(self):
@@ -56,8 +55,9 @@ class DetectManager():
         copy=self.pool[:]
         return copy
 
- # ts之内有010
-    def check010(self, arr, ts):
+    # ts之内有010
+    @staticmethod
+    def check010(arr, ts):
         is_find = False
         st = 0
         ctime = time.time()-ts
@@ -86,7 +86,8 @@ class DetectManager():
         return is_find
 
     # ts之内有01
-    def check01(self, arr, ts):
+    @staticmethod
+    def check01(arr, ts):
         is_find = False
         st = 0
         ctime = time.time() - ts
@@ -108,7 +109,8 @@ class DetectManager():
         return is_find
 
     # ts之内有10
-    def check10(self, arr, ts):
+    @staticmethod
+    def check10(arr, ts):
         is_find = False
         st = 0
         ctime = time.time() - ts
@@ -129,17 +131,43 @@ class DetectManager():
             is_find = True
         return is_find
 
+    # ts之内有beacon并获得最近一个beacon 返回{'udid':str(pl)}
+    def check_nearest_beacon(self, ts):
+        bas = []
+        for key in self.bstatus_dic:
+            arr = self.bstatus_dic[key]
+            avg = 0
+            ct = 0
+            for index, pl in enumerate(arr):
+                if time.time() - pl["time"] < ts:
+                    avg = avg + self.calculate_distance(pl['TX'], pl['RSSI'])
+                    ct = ct + 1
+            if ct > 0:
+                avg = avg / ct
+            # 把距离小于10m的提取出来
+            if avg < 10:
+                bas.append([key, str(avg)])
+        if len(bas) > 0:
+            findat = bas[0]
+            for index, at in enumerate(bas):
+                if index > 0:
+                    if int(findat[1]) < int(at[1]):
+                        findat = at
+            return {'type': int(IntMessage.serve), 'pyload': str(findat[0])}
+        else:
+            return {'type': int(IntMessage.use), 'pyload': ''}
+
     def set_history_beacon_behavior(self, pl):
         find = False
         strudid = ''+str(pl['UUID']) + str(pl['MINOR']) + str(pl['MAJOR'])
         for key in self.bstatus_dic:
-            if (strudid == key):
+            if strudid == key:
                 find = True
                 arr = self.bstatus_dic[strudid]
                 arr.append(pl)
                 self.bstatus_dic[strudid] = arr
                 break
-        if (find == False):
+        if find == False:
             self.bstatus_dic[strudid] = [pl]
         # DBG("set_history_beacon_behavior:")
         # DBG(self.bstatus_dic)
@@ -214,24 +242,24 @@ class DetectManager():
             # 收到s2亮信号
             else:
                 DBG('check')
-                if self.get_checking() == False:
+                if self.get_checking() is False:
                     DBG('check1')
                     # if self.get_pre_s2_lighton() == 0:
                     DBG('check2')
                     self.set_checking()
                     DBG('check3')
-                    self.ckStatu = ThreadCheckStatus.checking_use_or_serve
+                    self.ck_statu = ThreadCheckStatus.checking_use_or_serve
         elif pre_statu == IntMessage.use:
             # 收到s2灭掉信号
             if statu == 0:
-                if self.get_checking() == False:
+                if self.get_checking() is False:
                     #3s内s2有亮的情况
                     if self.check01(self.s2_array,3):
                         # while True:
                         #     time.sleep(1)
                             if self.get_pre_s1_lighton() == 0:
                                 self.set_checking()
-                                self.ckStatu = ThreadCheckStatus.checking_use_or_clean
+                                self.ck_statu = ThreadCheckStatus.checking_use_or_clean
                                 # break
             # 收到s2亮信号
             else:
@@ -251,7 +279,8 @@ class DetectManager():
         elif pre_statu == IntMessage.clean:
             self.dummy_function()
 
-    def calculate_distance(self, tx_power, rssi):
+    @staticmethod
+    def calculate_distance(tx_power, rssi):
         rssi = float(rssi)
         tx_power = float(tx_power)
 
