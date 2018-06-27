@@ -2,6 +2,7 @@ piPath="pi@192.168.2.116:/home/pi/test/untitled1"
 sourcePath="./"
 scp ${sourcePath}/controller.py $piPath/controller.py
 scp ${sourcePath}/DetectManager.py $piPath/DetectManager.py
+scp ${sourcePath}/CheckingThread.py $piPath/CheckingThread.py
 scp ${sourcePath}/GPIODetect.py $piPath/GPIODetect.py
 scp ${sourcePath}/repeat.py $piPath/repeat.py
 scp ${sourcePath}/gui/BeaconUI.py $piPath/gui/BeaconUI.py
