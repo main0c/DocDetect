@@ -47,14 +47,14 @@ except AttributeError:
 
 
 class Gui():
-    _commCallback = None
+    _commcallback = None
     _app = None
     _ui = None
     _mainwindow = None
     _thread = None
 
-    def __init__(self, commCallback):
-        self._commCallback = commCallback
+    def __init__(self, commcallback):
+        self._commcallback = commcallback
 
         # ready=0\in use=1\service=2\clean=3\
         data = DetectManager()
@@ -73,7 +73,7 @@ class Gui():
 
     def set_room_statu(self, statu, payload):
         DBG("set_room_statu:")
-        self.data._roomArray.append(statu)
+        self.data.room_array.append(statu)
         preStatu = statu
         if preStatu == IntMessage.ready:
             self._ui.statuLeftBtn.setText("IS READY")
@@ -86,6 +86,7 @@ class Gui():
                 "QPushButton {background-color: yellow;color: white; border: none;font-size:24px;}")
             self._ui.statuRightBtn.setText("Now Serve")
         elif preStatu == IntMessage.serve:
+            DBG(str(payload))
             self._ui.statuLeftBtn.setText("IN SERVICE")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color: blue;color: white; border: none;font-size:24px;}")
@@ -161,23 +162,19 @@ class Gui():
             self.show_dialog(msg.get_payload()['ALERT_TEXT'], msg.get_payload()['ALERT_DETAIL'])
         if msg.get_type() is IntMessage.LED1LightOn:
             self.fill_label(self._ui.led1Lbl, "LED1Light On", 1)
-            self.data._s1Array.append({'s': 1, 't': time.time()})
-            self.data.s1EventComming(1)
+            self.data.s1_event_comming(1)
             # DBG("led1Light On:")
         if msg.get_type() is IntMessage.LED1LightOff:
             self.fill_label(self._ui.led1Lbl, "LED1Light Off", 0)
-            self.data._s1Array.append({'s': 0, 't': time.time()})
-            self.data.s1EventComming(0)
+            self.data.s1_event_comming(0)
             # DBG("led1Light Off:")
         if msg.get_type() is IntMessage.LED2LightOn:
             self.fill_label(self._ui.led2Lbl, "LED2Light On", 1)
-            self.data._s2Array.append({'s': 1, 't': time.time()})
-            self.data.s2EventComming(1)
+            self.data.s2_event_comming(1)
             # DBG("LED2Light:On")
         if msg.get_type() is IntMessage.LED2LightOff:
             self.fill_label(self._ui.led2Lbl, "LED2Light Off", 0)
-            self.data.data._s2Array.append({'s': 1, 't': time.time()})
-            self.data.s2EventComming(0)
+            self.data.s2_event_comming(0)
             # DBG("LED2Light:Off")
 
         # Beacon scan - parameters textbox output
@@ -193,16 +190,16 @@ class Gui():
                 self.data.calculate_distance(pl['TX'], pl['RSSI'])) + '\n')
             blebar.setValue(blebar.maximum())
             find = False
-            for index, item in enumerate(self.data._beaconsArray):
+            for index, item in enumerate(self.data.beacons_array):
                 if (item['UUID'] == pl['UUID'] and item['MAJOR'] == pl['MAJOR'] and item['MINOR'] == pl['MINOR']):
                     find = True
-                    self.data._beaconsArray[index] = pl
+                    self.data.beacons_array[index] = pl
                     break
             if (find == False):
-                self.data._beaconsArray.append(pl)
+                self.data.beacons_array.append(pl)
 
-            self.data.setHistoryBeaconBehavior(pl)
-            self.tableview_set(self.data._beaconsArray)
+            self.data.set_history_beacon_behavior(pl)
+            self.tableview_set(self.data.beacons_array)
 
         # print sent signal into the outbox for each beacon type
         if msg.get_type() is IntMessage.SIGNAL_IBEACON:
@@ -251,46 +248,46 @@ class Gui():
     def bcscan(self):
         self._ui.bcscanstart.clicked.connect(self.bcscanstart_clicked)
         self._ui.bcscanstop.clicked.connect(self.bcscanstop_clicked)
-        self._ui.getSysBtn.clicked.connect(self.getSysBtn_clicked)
-        self._ui.stopGetSysBtn.clicked.connect(self.stopGetSysBtn_clicked)
-        self._ui.statuLeftBtn.clicked.connect(self.statuLeftButton_clicked)
-        self._ui.statuRightBtn.clicked.connect(self.statuRightButton_clicked)
+        self._ui.getSysBtn.clicked.connect(self.getsysbutton_clicked)
+        self._ui.stopGetSysBtn.clicked.connect(self.stopgetsysbutton_clicked)
+        self._ui.statuLeftBtn.clicked.connect(self.statuleftbutton_clicked)
+        self._ui.statuRightBtn.clicked.connect(self.staturightbutton_clicked)
 
-    def getSysBtn_clicked(self):
-        DBG('getSysBtn_clicked')
+    def getsysbutton_clicked(self):
+        DBG('getsysbutton_clicked')
         msg = IntMessage(IntMessage.GETSYSINFO)
-        self._commCallback(msg)
+        self._commcallback(msg)
 
-    def stopGetSysBtn_clicked(self):
-        DBG('stopGetSysBtn_clicked')
+    def stopgetsysbutton_clicked(self):
+        DBG('stopgetsysbutton_clicked')
         msg = IntMessage(IntMessage.STOPGETSYSINFO)
-        self._commCallback(msg)
+        self._commcallback(msg)
 
     def bcscanstart_clicked(self):
 
         msg = IntMessage(IntMessage.START_SCAN_BLE)
-        self._commCallback(msg)
+        self._commcallback(msg)
         DBG("Scan Button clicked")
 
     def bcscanstop_clicked(self):
 
         msg = IntMessage(IntMessage.STOP_SCAN_BLE)
-        self._commCallback(msg)
+        self._commcallback(msg)
         DBG("Stop Button clicked")
 
     def btscanstart_clicked(self):
 
         msg = IntMessage(IntMessage.START_SCAN_BT)
-        self._commCallback(msg)
+        self._commcallback(msg)
 
-    def statuLeftButton_clicked(self):
-        preStatu = self.getRoomPreStatu()
+    def statuleftbutton_clicked(self):
+        preStatu = self.get_room_pre_statu()
         DBG('---room Statu:' + str(preStatu))
         if preStatu == IntMessage.clean:
             self.set_room_statu(IntMessage.ready, '')
 
-    def statuRightButton_clicked(self):
-        preStatu = self.getRoomPreStatu()
+    def staturightbutton_clicked(self):
+        preStatu = self.get_room_pre_statu()
         DBG('---room Statu:' + str(preStatu))
         if preStatu == IntMessage.clean:
             self.set_room_statu(IntMessage.ready, '')
@@ -298,5 +295,5 @@ class Gui():
     # ui closed
     def uiclosed(self):
         msg = IntMessage(IntMessage.QUITAPP)
-        self._commCallback(msg)
+        self._commcallback(msg)
         # self._app.exec_()

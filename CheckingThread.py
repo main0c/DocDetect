@@ -18,9 +18,9 @@ class CheckingThread(QThread):
     _signal = pyqtSignal(str)
     _check_time = 0
 
-    def __init__(self, data, id, lock):
+    def __init__(self, data, tid, lock):
         super(CheckingThread, self).__init__()
-        self.id = id
+        self.tid = tid
         self.data = data
         self.lock = lock
 
@@ -40,28 +40,26 @@ class CheckingThread(QThread):
             # 把距离小于10m的提取出来
             if avg < 10:
                 bas.append([key, str(avg)])
-        rtdic = {}
         if len(bas) > 0:
             findat = bas[0]
             for index, at in enumerate(bas):
                 if index > 0:
                     if int(findat[1]) < int(at[1]):
                         findat = at
-            rtdic = {'type': int(IntMessage.serve), 'pyload': str(findat[0])}
+            return {'type': int(IntMessage.serve), 'pyload': str(findat[0])}
         else:
-            rtdic = {'type': int(IntMessage.use), 'pyload': ''}
-        return rtdic
+            return {'type': int(IntMessage.use), 'pyload': ''}
 
     def check_use_or_serve(self):
         # READY状态下判断S2亮 use or Serve:
         # 前10s判断s1有010状态变更
         DBG('check_use_or_serve')
-        if self.data.check010(self.data._s1Array, 10) == True:
+        if self.data.check010(self.data.s1_array, 10) == True:
             DBG('check_use_or_serve 1')
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
             DBG('check_use_or_serve 2')
-            if len(self.data._beaconsArray) == 0:
+            if len(self.data.beacons_array) == 0:
                 DBG('check_use_or_serve 3')
                 # 设置use状态
                 dic = {'type': int(IntMessage.use), 'pyload': ''}
@@ -70,14 +68,14 @@ class CheckingThread(QThread):
             else:
                 DBG('check_use_or_serve 4')
                 # 设置serve状态，并且获取最近的beacon
-                input = json.dumps(self.check_nearest_beacon(self.data._bstatusDic, 5))
+                input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
                 self._signal.emit(input)
 
     def use_check_serve_or_clean(self):
         # USE状态下判断serve or clean:
         # S1亮灯后判断3s后S2有010状态变更Y—再判断附近有没有beacon Y:SERVE N:USE
         time.sleep(3)
-        input = json.dumps(self.check_nearest_beacon(self.data._bstatusDic, 5))
+        input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
         self._signal.emit(input)
         # S2亮灯后判断3s后S2有没有010，有再判断2s后S1有没有010，Y:再判断附近有没有beacon SERVE N再判断S2有没有010Y:USE N:CLEAN
         time.sleep(10)
@@ -87,7 +85,7 @@ class CheckingThread(QThread):
         # SERVE状态下判断serve or clean:
         # S2亮前10s判断s1有010状态变更
         time.sleep(3)
-        input = json.dumps(self.check_nearest_beacon(self.data._bstatusDic, 5))
+        input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
         self._signal.emit(input)
         # USE：S1-1情况下判断未来3s有没有S2-010再判断S1后来有没有010如果有设置clean
         #       然后搜索附近beacon，如果有beacon找最近beacon设置serve
@@ -97,17 +95,17 @@ class CheckingThread(QThread):
         time.sleep(10)
         # READY状态下判断S2亮 use or Serve:
         # 前10s判断s1有010状态变更
-        if self.data.check010(self.data_s1Array, 10) == True:
+        if self.data.check010(self.datas1_array, 10) == True:
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
-            if len(self.data._beaconsArray) == 0:
+            if len(self.data.beacons_array) == 0:
                 # 设置use状态
                 dic = {'type': int(IntMessage.use), 'pyload': ''}
                 input = json.dumps(dic)
                 self._signal.emit(input)
             else:
                 # 设置serve状态，并且获取最近的beacon
-                input = json.dumps(self.check_nearest_beacon(self.data._bstatusDic, 5))
+                input = json.dumps(self.check_nearest_beacon(self.data.bstatus_dic, 5))
                 self._signal.emit(input)
 
     def run(self):
@@ -119,12 +117,12 @@ class CheckingThread(QThread):
                 self.lock.acquire()
 
                 if self.data.get_checking() == True:
-                    if self.data.ckStatu == ThreadCheckStatus.checking_use_or_serve:
+                    if self.data.ck_statu == ThreadCheckStatus.checking_use_or_serve:
                         self.check_use_or_serve()
-                    elif self.data.ckStatu == ThreadCheckStatus.checking_serve_or_clean:
+                    elif self.data.ck_statu == ThreadCheckStatus.checking_serve_or_clean:
                         # 判断当前是否离开，离开的话beacon arr=0
                         self.checkServeOrClean()
-                    elif self.data.ckStatu == ThreadCheckStatus.checking_use_or_clean:
+                    elif self.data.ck_statu == ThreadCheckStatus.checking_use_or_clean:
                         self.checkUserOrClean()
                     else:
                         DBG("get_checking == TRUE 5")
