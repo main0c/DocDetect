@@ -132,7 +132,8 @@ class Gui():
         self.model.setHeaderData(5, QtCore.Qt.Horizontal, _fromUtf8(u"MINOR"))
         # 添加表项
         for item in arr:
-            self.fill_model(self.model, str(round(self.data.calculate_distance(item['TX'], item['RSSI']), 2)) + " m", index, 0)
+            self.fill_model(self.model, str(round(self.data.calculate_distance(item['TX'], item['RSSI']), 2)) + " m",
+                            index, 0)
             self.fill_model(self.model, str(item['TX']), index, 1)
             self.fill_model(self.model, str(item['RSSI']), index, 2)
             self.fill_model(self.model, item['UUID'], index, 3)
@@ -140,8 +141,6 @@ class Gui():
             self.fill_model(self.model, str(item['MINOR']), index, 5)
             index += 1
         self._ui.tableView.setModel(self.model)
-
-
 
     def fill_label(self, label, msg, statu):
         label.setText(msg)
