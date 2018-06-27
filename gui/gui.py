@@ -66,26 +66,34 @@ class Gui():
 
     def check_stack(self, msg):
         dict = json.loads(msg)
-        self.set_room_statu({'type': int(IntMessage.ready), 'pyload':  eval(dict['pyload'])})
+        print('=====')
+        print(str(dict))
+        print('+++++')
+        pl = dict['pyload']
+        if pl is '':
+            self.set_room_statu({'type': dict['type'], 'pyload':  ''})
+        else:
+            self.set_room_statu({'type': dict['type'], 'pyload': eval(dict['pyload'])})
         # self.set_room_statu(dict['type'], eval(dict['pyload']))
 
     def set_room_statu(self, dic):
-        DBG("set_room_statu:")
         msg = IntMessage(dic['type'],  dic['pyload'])
+        DBG("set_room_statu:"+str(msg.get_type()))
 
         self.data.room_array.append(msg.get_type())
 
-        if msg.get_type() is IntMessage.ready:
+        if msg.get_type() == IntMessage.ready:
             self._ui.statuLeftBtn.setText("IS READY")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color:rgb(33, 255, 6);color: white; border: none;font-size:24px;}")
             self._ui.statuRightBtn.setText("Please Come In")
-        elif msg.get_type() is IntMessage.use:
+        elif msg.get_type() == IntMessage.use:
+            DBG("lai la!!!!!!")
             self._ui.statuLeftBtn.setText("IN USE")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color: yellow;color: white; border: none;font-size:24px;}")
             self._ui.statuRightBtn.setText("Now Serve")
-        elif msg.get_type() is IntMessage.serve:
+        elif msg.get_type() == IntMessage.serve:
             # DBG(str(payload))
             payload = msg.get_payload()
             pl = eval(payload)
@@ -95,7 +103,7 @@ class Gui():
                 "QPushButton {background-color: blue;color: white; border: none;font-size:24px;}")
 
             self._ui.statuRightBtn.setText("Now Serve")
-        elif msg.get_type() is IntMessage.clean:
+        elif msg.get_type() == IntMessage.clean:
             self._ui.statuLeftBtn.setText("NEED CLEAN")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color: gray;color: white; border: none;font-size:24px;}")
