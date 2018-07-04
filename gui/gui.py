@@ -28,9 +28,9 @@ from comm.intmessage import IntMessage
 from utils.debug import DBG
 
 try:
-    _fromUtf8 = QtCore.QString.fromUtf8
+    _fromutf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    def _fromUtf8(s):
+    def _fromutf8(s):
         return s
 
 try:
@@ -44,7 +44,7 @@ except AttributeError:
         return QtGui.QApplication.translate(context, text, disambig)
 
 
-class Gui():
+class Gui:
     _commcallback = None
     _app = None
     _ui = None
@@ -65,12 +65,12 @@ class Gui():
         self._thread = _thread
 
     def check_stack(self, msg):
-        dict = json.loads(msg)
-        pl = dict['pyload']
+        dic = json.loads(msg)
+        pl = dic['pyload']
         if pl is '':
-            self.set_room_statu({'type': dict['type'], 'pyload':  ''})
+            self.set_room_statu({'type': dic['type'], 'pyload':  ''})
         else:
-            self.set_room_statu({'type': dict['type'], 'pyload': eval(pl)})
+            self.set_room_statu({'type': dic['type'], 'pyload': eval(pl)})
         # self.set_room_statu(dict['type'], eval(dict['pyload']))
 
     def set_room_statu(self, dic):
@@ -105,8 +105,8 @@ class Gui():
                 "QPushButton {background-color: gray;color: white; border: none;font-size:24px;}")
             self._ui.statuRightBtn.setText("Do not enter")
 
-    def fill_model(self, model, str, row, column):
-        model.setItem(row, column, QtGui.QStandardItem(str))
+    def fill_model(self, model, strvalue, row, column):
+        model.setItem(row, column, QtGui.QStandardItem(strvalue))
         # 设置字符颜色
         model.item(row, column).setForeground(QtGui.QBrush(QtGui.QColor(255, 0, 0)))
         # 设置字符位置
@@ -132,12 +132,12 @@ class Gui():
         self._ui.tableView.setColumnWidth(5, 60)
         index = 0
         # 设置表头
-        self.model.setHeaderData(0, QtCore.Qt.Horizontal, _fromUtf8(u"DIST"))
-        self.model.setHeaderData(1, QtCore.Qt.Horizontal, _fromUtf8(u"TX"))
-        self.model.setHeaderData(2, QtCore.Qt.Horizontal, _fromUtf8(u"RSSI"))
-        self.model.setHeaderData(3, QtCore.Qt.Horizontal, _fromUtf8(u"UUID"))
-        self.model.setHeaderData(4, QtCore.Qt.Horizontal, _fromUtf8(u"MAJOR"))
-        self.model.setHeaderData(5, QtCore.Qt.Horizontal, _fromUtf8(u"MINOR"))
+        self.model.setHeaderData(0, QtCore.Qt.Horizontal, _fromutf8(u"DIST"))
+        self.model.setHeaderData(1, QtCore.Qt.Horizontal, _fromutf8(u"TX"))
+        self.model.setHeaderData(2, QtCore.Qt.Horizontal, _fromutf8(u"RSSI"))
+        self.model.setHeaderData(3, QtCore.Qt.Horizontal, _fromutf8(u"UUID"))
+        self.model.setHeaderData(4, QtCore.Qt.Horizontal, _fromutf8(u"MAJOR"))
+        self.model.setHeaderData(5, QtCore.Qt.Horizontal, _fromutf8(u"MINOR"))
         # 添加表项
         for item in arr:
             self.fill_model(self.model, str(round(self.data.calculate_distance(item['TX'], item['RSSI']), 2)) + " m",
@@ -150,7 +150,8 @@ class Gui():
             index += 1
         self._ui.tableView.setModel(self.model)
 
-    def fill_label(self, label, msg, statu):
+    @staticmethod
+    def fill_label(label, msg, statu):
         label.setText(msg)
         if statu == 1:
             pe = QPalette()
@@ -202,15 +203,13 @@ class Gui():
                     find = True
                     self.data.beacons_array[index] = pl
                     break
-            if (find == False):
+            if find is False:
                 self.data.beacons_array.append(pl)
 
             self.data.set_history_beacon_behavior(pl)
             self.tableview_set(self.data.beacons_array)
 
         # print sent signal into the outbox for each beacon type
-        if msg.get_type() is IntMessage.SIGNAL_IBEACON:
-            self._ui.ibgesendetessignal.append(str(pl['TEXT']))
         if msg.get_type() is IntMessage.GETSYSINFO:
             self._ui.sysInfoLbl.setText(str(pl['pyload']))
 
@@ -242,7 +241,8 @@ class Gui():
         sys.exit(self._app.exec_())
 
     # load saved values from config
-    def saved_values(self):
+    @staticmethod
+    def saved_values():
         DBG("saved_values:")
 
     # save values to config
@@ -280,18 +280,14 @@ class Gui():
         self._commcallback(msg)
         DBG("Stop Button clicked")
 
-    def btscanstart_clicked(self):
-        msg = IntMessage(IntMessage.START_SCAN_BT)
-        self._commcallback(msg)
-
     def statuleftbutton_clicked(self):
-        pre_statu = self.get_room_pre_statu()
+        pre_statu = self.data.get_room_pre_statu()
         DBG('---room Statu:' + str(pre_statu))
         if pre_statu == IntMessage.clean:
             self.set_room_statu({'type': int(IntMessage.ready), 'pyload': ''})
 
     def staturightbutton_clicked(self):
-        pre_statu = self.get_room_pre_statu()
+        pre_statu = self.data.get_room_pre_statu()
         DBG('---room Statu:' + str(pre_statu))
         if pre_statu == IntMessage.clean:
             self.set_room_statu({'type': int(IntMessage.ready), 'pyload': ''})

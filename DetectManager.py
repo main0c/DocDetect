@@ -8,8 +8,9 @@ import math
 class ThreadCheckStatus(enum.Enum):
     checking_no = 3
     checking_use_or_serve = 0
+    checking_serve = 4
     checking_serve_or_clean = 1
-    checking_use_or_clean = 2
+    # checking_use_or_clean = 2
 
 
 class DetectManager:
@@ -38,7 +39,6 @@ class DetectManager:
     def get_checking(self):
         return self.checking
 
-
     # ts之内有beacon并获得最近一个beacon 返回{'udid':str(pl)}
     def check_nearest_beacon(self, ts):
         bas = []
@@ -53,7 +53,7 @@ class DetectManager:
             if ct > 0:
                 avg = avg / ct
             # 把距离小于10m的提取出来
-            if avg < 10 and avg > 0:
+            if 0 < avg < 10:
                 if len(arr) > 0:
                     bas.append([key, str(avg), arr[len(arr)-1]])
         if len(bas) > 0:
@@ -77,7 +77,7 @@ class DetectManager:
                 arr.append(pl)
                 self.bstatus_dic[strudid] = arr
                 break
-        if find == False:
+        if find is False:
             self.bstatus_dic[strudid] = [pl]
         # DBG("set_history_beacon_behavior:")
         # DBG(self.bstatus_dic)
@@ -100,12 +100,12 @@ class DetectManager:
         return avg < 10
 
     def is_has_beacons(self):
-        #10s内beacon一直在数组中
+        # 10s内beacon一直在数组中
         if len(self.beacons_array) == 0:
             return False
         ct = 0
         for index, pl in enumerate(self.beacons_array):
-            if time.time()- pl["time"] < 10:
+            if time.time() - pl["time"] < 10:
                 ct = ct + 1
         print(str(ct)+'======')
         return ct != 0
@@ -125,7 +125,8 @@ class DetectManager:
             return IntMessage.ready
         return self.room_array[len(self.room_array)-1]
 
-    def dummy_function(self):
+    @staticmethod
+    def dummy_function():
         a = 0
         return a
         # DBG("dummy")
@@ -161,31 +162,36 @@ class DetectManager:
                     self.ck_statu = ThreadCheckStatus.checking_use_or_serve
         elif pre_statu == IntMessage.use:
             # 收到s2灭掉信号
-            if statu == 0:
-                if self.get_checking() is False:
-                    #3s内s2有亮的情况
-                    if self.check01(self.s2_array,3):
-                        # while True:
-                        #     time.sleep(1)
-                            if self.get_pre_s1_lighton() == 0:
-                                self.set_checking()
-                                self.ck_statu = ThreadCheckStatus.checking_use_or_clean
-                                # break
+            if self.get_checking() is False:
+                if statu == 0:
+                    # 3s内s2有亮的情况
+                    # if self.check01(self.s2_array,3):
+                    DBG('checking_serve')
             # 收到s2亮信号
-            else:
-                if self.is_has_beacons():
-                    # 判断上一个s1在10s内是否是1或0
-                    if self.beacon_comming():
-                        self.dummy_function()
+                else:
+                    self.set_checking()
+                    self.ck_statu = ThreadCheckStatus.checking_serve
+                    if self.is_has_beacons():
+                        # 判断上一个s1在10s内是否是1或0
+                        if self.beacon_comming():
+                            self.dummy_function()
                         # self.setRoomStatu(IntMessage.serve, '')
         elif pre_statu == IntMessage.serve:
             # 收到s2灭掉信号
-            if statu == 0:
-                self.dummy_function()
-                # self.setRoomStatu(IntMessage.clean, '')
-            # 收到s2亮信号
-            else:
-                self.dummy_function()
+            if self.get_checking() is False:
+                if statu == 0:
+                    # 3s内s2有亮的情况
+                    # if self.check01(self.s2_array,3):
+                    DBG('checking_use_or_clean')
+                # 收到s2亮信号
+                else:
+                    self.set_checking()
+                    self.ck_statu = ThreadCheckStatus.checking_use_or_clean
+                    if self.is_has_beacons():
+                        # 判断上一个s1在10s内是否是1或0
+                        if self.beacon_comming():
+                            self.dummy_function()
+                        # self.setRoomStatu(IntMessage.serve, '
         elif pre_statu == IntMessage.clean:
             self.dummy_function()
 
@@ -201,5 +207,5 @@ class DetectManager:
         if ratio < 1.0:
             return math.pow(ratio, 10)
         else:
-            accuracy = (0.89976) * math.pow(ratio, 7.7095) + 0.111
+            accuracy = 0.89976 * math.pow(ratio, 7.7095) + 0.111
             return accuracy
