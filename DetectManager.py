@@ -12,7 +12,7 @@ class ThreadCheckStatus(enum.Enum):
     checking_use_or_clean = 2
 
 
-class DetectManager():
+class DetectManager:
 
     # beacon距离数组
     bstatus_dic = {}
@@ -27,7 +27,6 @@ class DetectManager():
     ck_statu = ThreadCheckStatus.checking_no
 
     def __init__(self):
-        self.pool = [1, 2, 3]
         self.checking = False
 
     def set_checking(self):
@@ -39,97 +38,6 @@ class DetectManager():
     def get_checking(self):
         return self.checking
 
-    def get(self):
-        if self.pool.__len__() > 0:
-            return self.pool.pop()
-        else:
-            return None
-
-    def add(self, data):
-        self.pool.append(data)
-
-    def print(self):
-        print(self.pool)
-
-    def show(self):
-        copy=self.pool[:]
-        return copy
-
-    # ts之内有010
-    @staticmethod
-    def check010(arr, ts):
-        is_find = False
-        st = 0
-        ctime = time.time()-ts
-        idx = len(arr)
-        while (idx > 0):
-            idx = idx-1
-            print(str(arr[idx]))
-            print('---')
-            print(str(st))
-
-            dt = arr[idx]
-            if dt['t'] > ctime:
-                if st == 0:
-                    if dt['s'] == 0:
-                        st = 1
-                elif st == 1:
-                    if dt['s'] == 1:
-                        st = 2
-                elif st == 2:
-                    if dt['s'] == 0:
-                        st = 3
-            else:
-                break
-        if st == 3:
-            is_find = True
-        return is_find
-
-    # ts之内有01
-    @staticmethod
-    def check01(arr, ts):
-        is_find = False
-        st = 0
-        ctime = time.time() - ts
-        idx = len(arr)
-        while (idx > 0):
-            idx = idx - 1
-            dt = arr[idx]
-            if dt['t'] > ctime:
-                if st == 0:
-                    if dt['s'] == 1:
-                        st = 1
-                elif st == 1:
-                    if dt['s'] == 0:
-                        st = 2
-            else:
-                break
-        if st == 2:
-            is_find = True
-        return is_find
-
-    # ts之内有10
-    @staticmethod
-    def check10(arr, ts):
-        is_find = False
-        st = 0
-        ctime = time.time() - ts
-        idx = len(arr)
-        while (idx > 0):
-            idx = idx - 1
-            dt = arr[idx]
-            if dt['t'] > ctime:
-                if st == 0:
-                    if dt['s'] == 0:
-                        st = 1
-                elif st == 1:
-                    if dt['s'] == 1:
-                        st = 2
-            else:
-                break
-        if st == 2:
-            is_find = True
-        return is_find
 
     # ts之内有beacon并获得最近一个beacon 返回{'udid':str(pl)}
     def check_nearest_beacon(self, ts):
@@ -145,15 +53,17 @@ class DetectManager():
             if ct > 0:
                 avg = avg / ct
             # 把距离小于10m的提取出来
-            if avg < 10:
-                bas.append([key, str(avg)])
+            if avg < 10 and avg > 0:
+                if len(arr) > 0:
+                    bas.append([key, str(avg), arr[len(arr)-1]])
         if len(bas) > 0:
             findat = bas[0]
             for index, at in enumerate(bas):
                 if index > 0:
                     if int(findat[1]) < int(at[1]):
                         findat = at
-            return {'type': int(IntMessage.serve), 'pyload': str(findat[0])}
+            # print(str(findat))
+            return {'type': int(IntMessage.serve), 'pyload': str(findat[2])}
         else:
             return {'type': int(IntMessage.use), 'pyload': ''}
 

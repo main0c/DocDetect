@@ -66,14 +66,11 @@ class Gui():
 
     def check_stack(self, msg):
         dict = json.loads(msg)
-        print('=====')
-        print(str(dict))
-        print('+++++')
         pl = dict['pyload']
         if pl is '':
             self.set_room_statu({'type': dict['type'], 'pyload':  ''})
         else:
-            self.set_room_statu({'type': dict['type'], 'pyload': eval(dict['pyload'])})
+            self.set_room_statu({'type': dict['type'], 'pyload': eval(pl)})
         # self.set_room_statu(dict['type'], eval(dict['pyload']))
 
     def set_room_statu(self, dic):
@@ -94,11 +91,10 @@ class Gui():
                 "QPushButton {background-color: yellow;color: white; border: none;font-size:24px;}")
             self._ui.statuRightBtn.setText("Now Serve")
         elif msg.get_type() == IntMessage.serve:
-            # DBG(str(payload))
-            payload = msg.get_payload()
-            pl = eval(payload)
+            pl = msg.get_payload()
             info = ('UUID:' + str(pl['UUID']) + 'MAJ:' + str(pl['MAJOR']) + 'MIN:' + str(pl['MINOR']))
-            self._ui.statuLeftBtn.setText("IN SERVICE" + info)
+            self._ui.becon_info_label.setText(info)
+            self._ui.statuLeftBtn.setText("IN SERVICE")
             self._ui.statuLeftBtn.setStyleSheet(
                 "QPushButton {background-color: blue;color: white; border: none;font-size:24px;}")
 

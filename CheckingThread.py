@@ -24,11 +24,105 @@ class CheckingThread(QThread):
         self.data = data
         self.lock = lock
 
+    # ts之内有010
+    @staticmethod
+    def check010(arr, ts):
+        is_find = False
+        st = 0
+        ctime = time.time()-ts
+        idx = len(arr)
+        if idx == 1:
+            dt = arr[0]
+            if dt['s'] == 1:
+                st = 3
+        elif idx == 2:
+            while idx > 0:
+                idx = idx - 1
+                dt = arr[idx]
+                if dt['t'] > ctime:
+                    if st == 0:
+                        if dt['s'] == 0:
+                            st = 1
+                        else:
+                            st = 3
+                    elif st == 1:
+                        if dt['s'] == 1:
+                            st = 3
+                            break
+                else:
+                    break
+        else:
+            while idx > 0:
+                idx = idx-1
+                dt = arr[idx]
+                if dt['t'] > ctime:
+                    if st == 0:
+                        if dt['s'] == 0:
+                            st = 1
+                    elif st == 1:
+                        if dt['s'] == 1:
+                            st = 2
+                    elif st == 2:
+                        if dt['s'] == 0:
+                            st = 3
+                            break
+                else:
+                    break
+        if st == 3:
+            is_find = True
+        return is_find
+
+    # ts之内有01
+    @staticmethod
+    def check01(arr, ts):
+        is_find = False
+        st = 0
+        ctime = time.time() - ts
+        idx = len(arr)
+        while idx > 0:
+            idx = idx - 1
+            dt = arr[idx]
+            if dt['t'] > ctime:
+                if st == 0:
+                    if dt['s'] == 1:
+                        st = 1
+                elif st == 1:
+                    if dt['s'] == 0:
+                        st = 2
+            else:
+                break
+        if st == 2:
+            is_find = True
+        return is_find
+
+    # ts之内有10
+    @staticmethod
+    def check10(arr, ts):
+        is_find = False
+        st = 0
+        ctime = time.time() - ts
+        idx = len(arr)
+        while idx > 0:
+            idx = idx - 1
+            dt = arr[idx]
+            if dt['t'] > ctime:
+                if st == 0:
+                    if dt['s'] == 0:
+                        st = 1
+                elif st == 1:
+                    if dt['s'] == 1:
+                        st = 2
+            else:
+                break
+        if st == 2:
+            is_find = True
+        return is_find
+
     def check_use_or_serve(self):
         # READY状态下判断S2亮 use or Serve:
         # 前10s判断s1有010状态变更
         DBG('check_use_or_serve')
-        if self.data.check010(self.data.s1_array, 10) is True:
+        if self.check010(self.data.s1_array, 10) is True:
             DBG('check_use_or_serve 1')
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
@@ -69,7 +163,7 @@ class CheckingThread(QThread):
         time.sleep(10)
         # READY状态下判断S2亮 use or Serve:
         # 前10s判断s1有010状态变更
-        if self.data.check010(self.datas1_array, 10) is True:
+        if self.check010(self.datas1_array, 10) is True:
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
             if len(self.data.beacons_array) == 0:
