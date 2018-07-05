@@ -68,9 +68,9 @@ class CheckingThread(QThread):
                             break
                     elif st == 1:
                         if dt['s'] == 1:
-                            st = 2
-                        else:
                             st = 3
+                        else:
+                            st = 1
                             break
                     elif st == 2:
                         if dt['s'] == 0:
@@ -79,52 +79,6 @@ class CheckingThread(QThread):
                 else:
                     break
         if st == 3:
-            is_find = True
-        return is_find
-
-    # ts之内有01
-    @staticmethod
-    def check01(arr, ts):
-        is_find = False
-        st = 0
-        ctime = time.time() - ts
-        idx = len(arr)
-        while idx > 0:
-            idx = idx - 1
-            dt = arr[idx]
-            if dt['t'] > ctime:
-                if st == 0:
-                    if dt['s'] == 1:
-                        st = 1
-                elif st == 1:
-                    if dt['s'] == 0:
-                        st = 2
-            else:
-                break
-        if st == 2:
-            is_find = True
-        return is_find
-
-    # ts之内有10
-    @staticmethod
-    def check10(arr, ts):
-        is_find = False
-        st = 0
-        ctime = time.time() - ts
-        idx = len(arr)
-        while idx > 0:
-            idx = idx - 1
-            dt = arr[idx]
-            if dt['t'] > ctime:
-                if st == 0:
-                    if dt['s'] == 0:
-                        st = 1
-                elif st == 1:
-                    if dt['s'] == 1:
-                        st = 2
-            else:
-                break
-        if st == 2:
             is_find = True
         return is_find
 
@@ -148,14 +102,14 @@ class CheckingThread(QThread):
                 self._signal.emit(json.dumps(self.data.check_nearest_beacon(5)))
 
     def check_serve(self):
-        DBG('check_use_or_serve')
+        DBG('check_serve')
         if self.check010(self.data.s1_array, 10) is True:
-            DBG('check_use_or_serve 1')
+            DBG('check_serve 1')
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
-            DBG('check_use_or_serve 2')
+            DBG('check_serve 2')
             if len(self.data.beacons_array) == 0:
-                DBG('check_use_or_serve 3')
+                DBG('check_serve 3')
                 # 设置use状态
                 dic = {'type': int(IntMessage.use), 'pyload': ''}
                 self._signal.emit(json.dumps(dic))
@@ -165,21 +119,21 @@ class CheckingThread(QThread):
                 self._signal.emit(json.dumps(self.data.check_nearest_beacon(5)))
 
     def check_serve_or_clean(self):
-        DBG('check_use_or_serve')
+        DBG('check_serve_or_clean')
         if self.check010(self.data.s1_array, 10) is True:
-            DBG('check_use_or_serve 1')
+            DBG('check_serve_or_clean 1')
             # 查找3s内beaconArray有没有在附近
             time.sleep(3)
-            DBG('check_use_or_serve 2')
+            DBG('check_serve_or_clean 2')
             if len(self.data.beacons_array) == 0:
-                DBG('check_use_or_serve 3')
+                DBG('check_serve_or_clean 3')
                 # 设置use状态
                 dic = {'type': int(IntMessage.clean), 'pyload': ''}
                 self._signal.emit(json.dumps(dic))
             else:
                 DBG('check_use_or_serve 4')
                 # 设置serve状态，并且获取最近的beacon
-                self._signal.emit(json.dumps(self.data.check_nearest_beacon(5)))
+                self._signal.emit(json.dumps(self.data.check_nearest_beacon(10)))
 
     def serve_check_use(self):
         time.sleep(10)

@@ -191,23 +191,26 @@ class Gui:
         if msg.get_type() is IntMessage.SCANNED_IBEACON:
             # DBG(pl)
             # DBG(type(pl))
+            distance = self.data.calculate_distance(pl['TX'], pl['RSSI'])
+            # 小于10m的beacon去掉
+            if float(distance) < 10.0:
             # self._ui.bcscanausgabe.append('iBeacon' + '\nUUID: ' + '\t' + pl['UUID'] + '\n')
-            self._ui.bcscanausgabe.append('iBeacon' + '\nUUID: ' + '\t' + str(pl['UUID']) + '\nMAJOR: ' + '\t' + str(
-                pl['MAJOR']) + '\nMINOR: ' + '\t' + str(pl['MINOR']) + '\nTX: ' + '\t' + str(
-                pl['TX']) + '\tRSSI: ' + '\t' + str(pl['RSSI']) + '\tdist' + str(
-                self.data.calculate_distance(pl['TX'], pl['RSSI'])) + '\n')
-            blebar.setValue(blebar.maximum())
-            find = False
-            for index, item in enumerate(self.data.beacons_array):
-                if (item['UUID'] == pl['UUID'] and item['MAJOR'] == pl['MAJOR'] and item['MINOR'] == pl['MINOR']):
-                    find = True
-                    self.data.beacons_array[index] = pl
-                    break
-            if find is False:
-                self.data.beacons_array.append(pl)
+                self._ui.bcscanausgabe.append('iBeacon' + '\nUUID: ' + '\t' + str(pl['UUID']) + '\nMAJOR: ' + '\t' + str(
+                    pl['MAJOR']) + '\nMINOR: ' + '\t' + str(pl['MINOR']) + '\nTX: ' + '\t' + str(
+                    pl['TX']) + '\tRSSI: ' + '\t' + str(pl['RSSI']) + '\tdist' + str(
+                    distance) + '\n')
+                blebar.setValue(blebar.maximum())
+                find = False
+                for index, item in enumerate(self.data.beacons_array):
+                    if (item['UUID'] == pl['UUID'] and item['MAJOR'] == pl['MAJOR'] and item['MINOR'] == pl['MINOR']):
+                        find = True
+                        self.data.beacons_array[index] = pl
+                        break
+                if find is False:
+                    self.data.beacons_array.append(pl)
 
-            self.data.set_history_beacon_behavior(pl)
-            self.tableview_set(self.data.beacons_array)
+                self.data.set_history_beacon_behavior(pl)
+                self.tableview_set(self.data.beacons_array)
 
         # print sent signal into the outbox for each beacon type
         if msg.get_type() is IntMessage.GETSYSINFO:

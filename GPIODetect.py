@@ -7,7 +7,7 @@ from comm.intmessage import IntMessage
 class GPIODetect():
 
     _commCallback = None
-    repeatThread = RepeatTimer(1000, None)
+    # repeatThread = RepeatTimer(1000, None)
 
     def __init__(self, commCallback):
         self._commCallback = commCallback
