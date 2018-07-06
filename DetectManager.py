@@ -75,7 +75,6 @@ class DetectManager:
             return str(findat[2])
         return ''
 
-
     def set_history_beacon_behavior(self, pl):
         find = False
         strudid = ''+str(pl['UUID']) + str(pl['MINOR']) + str(pl['MAJOR'])
@@ -143,13 +142,10 @@ class DetectManager:
     def s1_event_comming(self, statu):
         self.s1_array.append({'s': statu, 't': time.time()})
         # DBG("s1_event_comming:")
-        pre_statu = self.get_room_pre_statu()
-        if pre_statu == IntMessage.use:
-            if statu == 0:
-                self.ck_statu = ThreadCheckStatus.checking_serve_or_clean
-        if pre_statu == IntMessage.serve:
-            # 收到s1灭掉信号
-            if self.get_checking() is False:
+        if self.get_checking() is False:
+            pre_statu = self.get_room_pre_statu()
+            if pre_statu == IntMessage.serve:
+                # 收到s1灭掉信号
                 if statu == 0:
                     # 3s内s2有亮的情况
                     DBG('checking_serve_or_clean s1')
@@ -161,25 +157,25 @@ class DetectManager:
 
     def s2_event_comming(self, statu):
         self.s2_array.append({'s': statu, 't': time.time()})
-        pre_statu = self.get_room_pre_statu()
-        # DBG("s2_event_comming:" + str(statu) + '---room Statu:' + str(pre_statu))
-        if pre_statu == IntMessage.ready:
-            # 收到s2灭掉信号
-            if statu == 0:
-                self.dummy_function()
-            # 收到s2亮信号
-            else:
-                DBG('check')
-                if self.get_checking() is False:
-                    DBG('check1')
-                    # if self.get_pre_s2_lighton() == 0:
-                    DBG('check2')
-                    self.set_checking()
-                    DBG('check3')
-                    self.ck_statu = ThreadCheckStatus.checking_use_or_serve
-        elif pre_statu == IntMessage.use:
-            # 收到s2灭掉信号
-            if self.get_checking() is False:
+        if self.get_checking() is False:
+            pre_statu = self.get_room_pre_statu()
+            # DBG("s2_event_comming:" + str(statu) + '---room Statu:' + str(pre_statu))
+            if pre_statu == IntMessage.ready:
+                # 收到s2灭掉信号
+                if statu == 0:
+                    self.dummy_function()
+                # 收到s2亮信号
+                else:
+                    DBG('check')
+                    if self.get_checking() is False:
+                        DBG('check1')
+                        # if self.get_pre_s2_lighton() == 0:
+                        DBG('check2')
+                        self.set_checking()
+                        DBG('check3')
+                        self.ck_statu = ThreadCheckStatus.checking_use_or_serve
+            elif pre_statu == IntMessage.use:
+                # 收到s2灭掉信号
                 if statu == 0:
                     # 3s内s2有亮的情况
                     DBG('use checking_serve')
@@ -187,9 +183,8 @@ class DetectManager:
                 else:
                     self.set_checking()
                     self.ck_statu = ThreadCheckStatus.checking_serve
-        elif pre_statu == IntMessage.serve:
-            # 收到s2灭掉信号
-            if self.get_checking() is False:
+            elif pre_statu == IntMessage.serve:
+                # 收到s2灭掉信号
                 if statu == 0:
                     # 3s内s2有亮的情况
                     DBG('checking_serve_or_clean s2')
@@ -198,9 +193,8 @@ class DetectManager:
                     self.set_checking()
                     self.ck_statu = ThreadCheckStatus.checking_serve_or_clean
                     DBG('checking_serve_or_clean set_checking s2')
-
-        elif pre_statu == IntMessage.clean:
-            self.dummy_function()
+            elif pre_statu == IntMessage.clean:
+                self.dummy_function()
 
     @staticmethod
     def calculate_distance(tx_power, rssi):
