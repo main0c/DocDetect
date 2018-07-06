@@ -40,7 +40,7 @@ class DetectManager:
         return self.checking
 
     # ts之内有beacon并获得最近一个beacon 返回{'udid':str(pl)}
-    def check_nearest_beacon(self, ts):
+    def get_nearest_beacon(self, ts):
         bas = []
         for key in self.bstatus_dic:
             arr = self.bstatus_dic[key]
@@ -72,14 +72,9 @@ class DetectManager:
                 if index > 0:
                     if float(findat[1]) < float(at[1]):
                         findat = at
-            # print(str(findat))
-            return {'type': int(IntMessage.serve), 'pyload': str(findat[2])}
-        else:
-            # 如果是10s就是判断clean
-            if ts == 10:
-                return {'type': int(IntMessage.clean), 'pyload': ''}
-            else:
-                return {'type': int(IntMessage.use), 'pyload': ''}
+            return str(findat[2])
+        return ''
+
 
     def set_history_beacon_behavior(self, pl):
         find = False
@@ -192,11 +187,6 @@ class DetectManager:
                 else:
                     self.set_checking()
                     self.ck_statu = ThreadCheckStatus.checking_serve
-                    if self.is_has_beacons():
-                        # 判断上一个s1在10s内是否是1或0
-                        if self.beacon_comming():
-                            self.dummy_function()
-                        # self.setRoomStatu(IntMessage.serve, '')
         elif pre_statu == IntMessage.serve:
             # 收到s2灭掉信号
             if self.get_checking() is False:

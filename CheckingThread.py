@@ -89,7 +89,6 @@ class CheckingThread(QThread):
         if self.check010(self.data.s1_array, 10) is True:
             DBG('check_use_or_serve 1')
             # 查找3s内beaconArray有没有在附近
-            time.sleep(3)
             DBG('check_use_or_serve 2')
             if len(self.data.beacons_array) == 0:
                 DBG('check_use_or_serve 3')
@@ -99,7 +98,12 @@ class CheckingThread(QThread):
             else:
                 DBG('check_use_or_serve 4')
                 # 设置serve状态，并且获取最近的beacon
-                self._signal.emit(json.dumps(self.data.check_nearest_beacon(5)))
+                pl = self.data.get_nearest_beacon(5)
+                DBG(str(pl) + str(len(pl)))
+                if len(pl) > 0:
+                    return self._signal.emit(json.dumps({'type': int(IntMessage.serve), 'pyload': pl}))
+                else:
+                    return self._signal.emit(json.dumps({'type': int(IntMessage.use), 'pyload': ''}))
 
     def check_serve(self):
         DBG('check_serve')
@@ -116,50 +120,34 @@ class CheckingThread(QThread):
             else:
                 DBG('check_use_or_serve 4')
                 # 设置serve状态，并且获取最近的beacon
-                self._signal.emit(json.dumps(self.data.check_nearest_beacon(5)))
+                pl = self.data.get_nearest_beacon(5)
+                if len(pl) > 0:
+                    return self._signal.emit(json.dumps({'type': int(IntMessage.serve), 'pyload': pl}))
+                else:
+                    return self._signal.emit(json.dumps({'type': int(IntMessage.use), 'pyload': ''}))
 
     def check_serve_or_clean(self):
         DBG('check_serve_or_clean')
-        if self.check010(self.data.s1_array, 10) is True:
-            DBG('check_serve_or_clean 1')
-            # 查找3s内beaconArray有没有在附近
-            time.sleep(3)
-            DBG('check_serve_or_clean 2')
-            if len(self.data.beacons_array) == 0:
-                DBG('check_serve_or_clean 3')
-                # 设置use状态
-                dic = {'type': int(IntMessage.clean), 'pyload': ''}
-                self._signal.emit(json.dumps(dic))
-            else:
-                DBG('check_use_or_serve 4')
-                # 设置serve状态，并且获取最近的beacon
-                self._signal.emit(json.dumps(self.data.check_nearest_beacon(10)))
+        pl = self.data.get_nearest_beacon(10)
+        if len(pl) > 0:
+            DBG("server")
+            time.sleep(1)
+            self.check_serve_or_clean()
+        else:
+            return self._signal.emit(json.dumps({'type': int(IntMessage.clean), 'pyload': ''}))
 
     def serve_check_use(self):
         time.sleep(10)
         # SERVE状态下判断serve or clean:
         # S2亮前10s判断s1有010状态变更
         time.sleep(3)
-        self._signal.emit(json.dumps(self.data.check_nearest_beacon(5)))
+        pl = self.data.get_nearest_beacon(5)
+        if len(pl) > 0:
+            return self._signal.emit(json.dumps({'type': int(IntMessage.serve), 'pyload': pl}))
+        else:
+            return self._signal.emit(json.dumps({'type': int(IntMessage.use), 'pyload': ''}))
         # USE：S1-1情况下判断未来3s有没有S2-010再判断S1后来有没有010如果有设置clean
         #       然后搜索附近beacon，如果有beacon找最近beacon设置serve
-
-    def check_use_or_clean(self):
-        # USE状态下判断serve or clean:前10s判断s1有010状态变更
-        time.sleep(10)
-        # READY状态下判断S2亮 use or Serve:
-        # 前10s判断s1有010状态变更
-        if self.check010(self.datas1_array, 10) is True:
-            # 查找3s内beaconArray有没有在附近
-            time.sleep(3)
-            if len(self.data.beacons_array) == 0:
-                # 设置use状态
-                dic = {'type': int(IntMessage.use), 'pyload': ''}
-                self._signal.emit(json.dumps(dic))
-            else:
-                # 设置serve状态，并且获取最近的beacon
-                dic = {'type': int(IntMessage.serve), 'pyload': str(self.data.check_nearest_beacon(5))}
-                self._signal.emit(json.dumps(dic))
 
     def run(self):
         # DBG("run!")

@@ -124,10 +124,10 @@ class Gui:
         self.model.setRowCount(20)
         self.model.setColumnCount(6)
         # 设置列宽
-        self._ui.tableView.setColumnWidth(0, 80)
+        self._ui.tableView.setColumnWidth(0, 72)
         self._ui.tableView.setColumnWidth(1, 50)
         self._ui.tableView.setColumnWidth(2, 50)
-        self._ui.tableView.setColumnWidth(3, 120)
+        self._ui.tableView.setColumnWidth(3, 180)
         self._ui.tableView.setColumnWidth(4, 60)
         self._ui.tableView.setColumnWidth(5, 60)
         index = 0
@@ -292,8 +292,8 @@ class Gui:
     def staturightbutton_clicked(self):
         pre_statu = self.data.get_room_pre_statu()
         DBG('---room Statu:' + str(pre_statu))
-        if pre_statu == IntMessage.clean:
-            self.set_room_statu({'type': int(IntMessage.ready), 'pyload': ''})
+        # if pre_statu == IntMessage.clean:
+        self.set_room_statu({'type': int(IntMessage.ready), 'pyload': ''})
 
     # ui closed
     def uiclosed(self):
